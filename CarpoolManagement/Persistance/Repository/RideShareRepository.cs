@@ -4,6 +4,7 @@ namespace CarpoolManagement.Persistance.Repository
 {
     public class RideShareRepository
     {
+        private int _id = 0;
         private Dictionary<int, RideShare> _rideShares = new();
 
         public IEnumerable<RideShare> GetAll() => _rideShares.Values.ToList();
@@ -16,8 +17,8 @@ namespace CarpoolManagement.Persistance.Repository
 
         public RideShare Add(RideShare rideShare)
         {
-            rideShare.Id = _rideShares.Keys.Count > 0 ? _rideShares.Keys.Max() + 1 : 1;
-           
+            rideShare.Id = _id + 1;
+
             _rideShares.Add(rideShare.Id.Value, rideShare);
 
             return rideShare;
@@ -25,7 +26,7 @@ namespace CarpoolManagement.Persistance.Repository
 
         public void Update(RideShare rideShare)
         {
-            int id = rideShare.Id.Value;
+            int id = rideShare.Id!.Value;
 
             if (_rideShares.ContainsKey(id))
             {

@@ -13,10 +13,10 @@ namespace CarpoolManagement.Models
         public string? EndLocation { get; set; }
 
         [Required]
-        public string? StartDate { get; set; }
+        public DateTime StartDate { get; set; }
 
         [Required]
-        public string? EndDate { get; set; }
+        public DateTime EndDate { get; set; }
 
         [Required]
         [RegularExpression("[a-zA-z]{2} [0-9]{3}-[a-zA-z]{2}", ErrorMessage = "Car Plate should be in AA 111-AA format")]

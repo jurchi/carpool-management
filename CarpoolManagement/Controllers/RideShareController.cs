@@ -2,18 +2,14 @@
 using CarpoolManagement.Source;
 using CarpoolManagement.Source.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
 namespace CarpoolManagement.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class RideShareController : ControllerBase
     {
-        //TODO: ADD REQUEST FOR POST/PUT + AutoMapper
-        //TODO: ADD SWAGGER SUPPORT
-
         private readonly RideShareService _rideShareService;
 
         public RideShareController([FromServices] RideShareService rideShareService)
@@ -32,15 +28,15 @@ namespace CarpoolManagement.Controllers
         {
             RideShare newRideShare = new()
             {
-                CarPlate = newRideShareRequest.CarPlate,
-                EmployeeIds = newRideShareRequest.EmployeeIds,
-                StartLocation = newRideShareRequest.StartLocation,
-                EndLocation = newRideShareRequest.EndLocation,
-                StartDate = DateTime.Parse(newRideShareRequest.StartDate, new CultureInfo("sk")),
-                EndDate = DateTime.Parse(newRideShareRequest.EndDate, new CultureInfo("sk"))
+                CarPlate = newRideShareRequest.CarPlate!,
+                EmployeeIds = newRideShareRequest.EmployeeIds!,
+                StartLocation = newRideShareRequest.StartLocation!,
+                EndLocation = newRideShareRequest.EndLocation!,
+                StartDate = newRideShareRequest.StartDate,
+                EndDate = newRideShareRequest.EndDate
             };
-            
-             return _rideShareService.CreateRideShare(newRideShare);
+
+            return _rideShareService.CreateRideShare(newRideShare);
         }
 
         [HttpPut]
@@ -50,12 +46,12 @@ namespace CarpoolManagement.Controllers
             RideShare newRideShare = new()
             {
                 Id = id,
-                CarPlate = updateRideShareRequest.CarPlate,
-                EmployeeIds = updateRideShareRequest.EmployeeIds,
-                StartLocation = updateRideShareRequest.StartLocation,
-                EndLocation = updateRideShareRequest.EndLocation,
-                StartDate = DateTime.Parse(updateRideShareRequest.StartDate, new CultureInfo("sk")),
-                EndDate = DateTime.Parse(updateRideShareRequest.EndDate, new CultureInfo("sk"))
+                CarPlate = updateRideShareRequest.CarPlate!,
+                EmployeeIds = updateRideShareRequest.EmployeeIds!,
+                StartLocation = updateRideShareRequest.StartLocation!,
+                EndLocation = updateRideShareRequest.EndLocation!,
+                StartDate = updateRideShareRequest.StartDate,
+                EndDate = updateRideShareRequest.EndDate
             };
 
             _rideShareService.UpdateRideShare(newRideShare);

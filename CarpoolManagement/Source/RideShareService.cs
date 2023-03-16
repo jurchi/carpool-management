@@ -1,6 +1,5 @@
 ﻿using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source.Models;
-using System.Reflection.Metadata.Ecma335;
 
 namespace CarpoolManagement.Source
 {
@@ -66,7 +65,7 @@ namespace CarpoolManagement.Source
         /// <exception cref="BadHttpRequestException">End Date is sooner than Start Date</exception>
         private static void ValidateRideShareTimeFrame(DateTime StarDate, DateTime EndDate)
         {
-            if (DateTime.Compare(StarDate, EndDate) > 0)
+            if (DateTime.Compare(StarDate, EndDate) >= 0)
             {
                 throw new BadHttpRequestException("Start Date must be earlier than End Date");
             }
