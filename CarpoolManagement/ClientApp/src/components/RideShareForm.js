@@ -9,7 +9,6 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const RideShareForm = () => {
     const navigate = useNavigate();
-
     const { search } = useLocation();
     const params = new URLSearchParams(search);
     const id = params.get('id');
@@ -39,7 +38,7 @@ const RideShareForm = () => {
     const [options, setOptions] = useState([]);
 
     useEffect(() => {
-        async function populateEmployeeOptions() {
+        const populateEmployeeOptions = () => {
             fetch('api/employee')
                 .then(response => {
                     if (response.ok) {
@@ -55,48 +54,41 @@ const RideShareForm = () => {
                     let selectedDriverId = drivers[0].id;
                     setSelectedDriver(selectedDriverId);
                     filterAndSetPassengerOptions(data, selectedDriverId);
-
-                    return data;
                 })
                 .catch(err => {
                     console.log(err);
                 })
         }
 
-        async function execute() {
-            await Promise.all([populateEmployeeOptions()]);
-        }
+        populateEmployeeOptions();
+        populateCarOptions();
 
-        const populateDefaults = ({ options }) => {
+        if (id) {
             fetch(`api/rideshare/id/${id}`)
                 .then(response => {
                     if (response.ok) {
                         return response.json();
                     }
-                    throw Error('could not fetch the data for that resource');
+                    throw Error('Could not fetch the ride share with id: ' + id);
                 })
                 .then(data => {
+                    console.log(data);
                     setStartLocation(data.startLocation);
                     setEndLocation(data.endLocation);
-                    setSelectedCarPlate(data.carPlate);
+                    setSelectedCarPlate(data.car.plate);
                     setSelectedDriver(data.driverId);
 
-                    setSelectedPassengers(data.employeeIds.filter(id => id != data.driverId));
+                    let filteredEmployees = data.employees.filter(employee => employee.id != data.driverId);
+                    setSelectedPassengers(filteredEmployees);
                     setDates([{ startDate: new Date(data.startDate), endDate: new Date(data.endDate), key: 'selection' }]);
 
-                    setPassengerOptions(options);
+                    let passOpts = filteredEmployees.map(employee => ({ value: employee.id, label: employee.name }));
+                    console.log(passOpts);
+                    setPassengerOptions(passOpts);
                 })
                 .catch(err => {
                     console.log(err);
                 })
-        }
-
-        execute();
-
-        populateCarOptions();
-
-        if (id) {
-            populateDefaults(options);
         }
 
     }, []);
@@ -132,24 +124,24 @@ const RideShareForm = () => {
             method: httpMethod,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(request)
-        }).then(response => {
-            if (!response.ok) { // error coming back from server
-                let error = response.json();
-                throw {message: error.message};
-            }
-            return response.json();
-        }).then(() => {
-            navigate('/');
-        })
-        .catch(err => {
-            console.log(err);
-        });
+            })
+            .then(response => {
+                if (!response.ok) throw response;
+
+                return response.json();
+            })
+            .then(() =>{
+                navigate('/');
+            })
+            .catch(error => {
+                return error.json().then(body => alert(`${body.title} ${body.detail}`))
+            });
     }
 
     const handleCarChange = (carPlate) => {
         setSelectedCarPlate(carPlate);
         let car = cars.find(car => car.plate == carPlate);
-        
+
         // Car Seats - 1 driver
         setCarSeatsRemaining(car.numberOfSeats - 1);
     };
@@ -213,10 +205,10 @@ const RideShareForm = () => {
                     className="form-select"
                     value={selectedCarPlate}
                     onChange={(e) => handleCarChange(e.target.value)}
-                    >
+                >
                     {cars.map(car =>
                         <option key={car.plate} value={car.plate}>{car.name}</option>
-                        )}
+                    )}
                 </select>
                 <label>Driver:</label>
                 <select
@@ -227,18 +219,18 @@ const RideShareForm = () => {
                 >
                     {drivers.map(driver =>
                         <option key={driver.id} value={driver?.id}>{driver.name}</option>
-                        )}
+                    )}
                 </select>
                 <label>Additional passengers:</label>
                 <span className="note">You can select max {carSeatsRemaining} passengers for selected car</span>
-                <Select                    
+                <Select
                     name="passengers"
                     isMulti
                     isClearable
                     className="basic-multi-select"
                     options={options}
                     defaultValue={passengerOptions}
-                    onChange= {(e) => setSelectedPassengers(e.map(passenger => passenger.value))}
+                    onChange={(e) => setSelectedPassengers(e.map(passenger => passenger.value))}
                     isOptionDisabled={() => selectedPassengers.length >= carSeatsRemaining}
                 />
                 <label>Select dates:</label>

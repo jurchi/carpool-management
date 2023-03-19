@@ -4,7 +4,7 @@ import CarDetails from "./CarDetails";
 import PassengerTable from "./PassengerTable";
 
 const RideShareView = () => {
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const [months, setMonths] = useState(Array.from({ length: 12 }, (_, i) => i + 1));
     const [selectedMonth, setSelectedMonth] = useState(Number);
 
     const [years, setYears] = useState([2020]);
@@ -31,6 +31,9 @@ const RideShareView = () => {
                 
                 let reportYears = [...new Set(reports.map(report => report.year))];
                 setYears(reportYears);
+
+                let reportMonths = [...new Set(reports.map(report => report.month))];
+                setMonths(reportMonths);
 
                 let reportCarPlates = reports.map(report => report.car.plate);
                 let filteredReportCarPlates = [...new Set(reportCarPlates.map(plate => plate))];

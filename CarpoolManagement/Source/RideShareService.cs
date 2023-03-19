@@ -1,5 +1,6 @@
 ﻿using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source.Models;
+using System.Reflection.Metadata.Ecma335;
 
 namespace CarpoolManagement.Source
 {
@@ -52,7 +53,7 @@ namespace CarpoolManagement.Source
 
             foreach (var report in reports)
             {
-                report.Car = cars.FirstOrDefault(car => String.Equals(car.Plate, report.Car.Plate, StringComparison.OrdinalIgnoreCase)) ?? report.Car;
+                report.Car = cars.FirstOrDefault(car => string.Equals(car.Plate, report.Car!.Plate, StringComparison.OrdinalIgnoreCase)) ?? report.Car;
 
                 IEnumerable<int> passengerIds = report.Passengers.Select(passenger => passenger.Id).ToList();
                 report.Passengers = employees.Where(employee => passengerIds.Contains(employee.Id)).ToList();
@@ -63,7 +64,31 @@ namespace CarpoolManagement.Source
 
         public void DeleteRideShare(int id) => _rideShareRepository.DeleteRideShare(id);
 
-        public RideShare? GetById(int id) => _rideShareRepository.GetById(id);
+        public RideShareFullDetails? GetById(int id) {
+            RideShare? rideShare = _rideShareRepository.GetById(id);
+            
+            RideShareFullDetails? rideShareDetails = null;
+
+            if (rideShare != null)
+            { 
+                Car? car = _carRepository.GetByPlate(rideShare!.CarPlate);
+                IEnumerable<Employee> employees = _employeeRepository.GetByIds(rideShare.EmployeeIds);
+
+                rideShareDetails = new()
+                {
+                    Id = rideShare.Id,
+                    StartDate = rideShare.StartDate,
+                    EndDate = rideShare.EndDate,
+                    StartLocation = rideShare.StartLocation,
+                    EndLocation = rideShare.EndLocation,
+                    DriverId = rideShare.DriverId,
+                    Car = car ?? new Car { Plate = rideShare.CarPlate },
+                    Employees = employees
+                };
+            }
+
+            return rideShareDetails;
+        } 
 
         /// <summary>
         /// Handles All Business Validation for Ride Share
