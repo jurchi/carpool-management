@@ -24,24 +24,25 @@ Appplication can be started multiple ways:
 ## Description:
 (WIP)
 FE application is divided into three screens.
-- Landing page (HOME)
-    This page provides summary of all ride share records.
-    It gives you ability to create/update/delete ride share records    
 
-- Form page
-    This page is accessed by *Create ...* / *Update* buttons
-    It ~~is~~ should be dynamically populated when Update is clicked
-    Start and End location text inputs are required
-    Driver and Car selection is automatically selected for first available option
-    Passenger selection is constrained by car seat count - 1 for driver
-    Currently lacks the ability to select time for ride share
+- Landing page (HOME)  
+    - This page provides summary of all ride share records  
+    - It gives you ability to create/update/delete ride share records  
 
-- Ride Share View page
-    Provides report view
-    It can be filtered by Year / Month / Car identification plate
-    Currently filter takes in to account only Start Date of Ride Share
+- Form page  
+    - This page is accessed by *Create ...* / *Update* buttons  
+    - It ~~is~~ should be dynamically populated when Update is clicked  
+    - Start and End location text inputs are required  
+    - Driver and Car selection is automatically selected for first available option  
+    - Passenger selection is constrained by car seat count - 1 for driver  
+    - Currently lacks the ability to select time for ride share  
 
-- ***Application have [Swagger](https://swagger.io/docs/specification/2-0/what-is-swagger/) set up. You can access it on '/swagger' url***
+- Ride Share View page  
+    - Provides report view  
+    - It can be filtered by Year / Month / Car identification plate  
+    - Currently filter takes in to account only Start Date of Ride Share  
+
+- ***Application has [Swagger](https://swagger.io/docs/specification/2-0/what-is-swagger/) set up. You can access it on '/swagger' url***
 
 ## Known Issues:
 - Delete button does not react on first click
