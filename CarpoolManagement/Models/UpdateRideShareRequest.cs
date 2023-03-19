@@ -24,5 +24,8 @@ namespace CarpoolManagement.Models
 
         [Required]
         public IEnumerable<int> EmployeeIds { get; set; } = new List<int>();
+
+        [Required]
+        public int DriverId { get; set; }
     }
 }

@@ -30,15 +30,7 @@ namespace CarpoolManagement.Controllers
         public ActionResult<Car> GetCarByPlate([FromBody]FindCarRequest request, [FromServices] CarRepository repository)
         {
             var car = repository.GetByPlate(request.Plate);
-
-            if (car == null)
-            {
-                return NotFound();
-            }
-            else
-            { 
-                return Ok(car);
-            }
+            return car == null ? NotFound() : Ok(car);
         }
     }
 }

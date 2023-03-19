@@ -19,15 +19,7 @@ namespace CarpoolManagement.Controllers
         public ActionResult<IEnumerable<Employee>> FindEmployees([FromBody] FindEmployeesRequest request, [FromServices] EmployeeRepository repository)
         {
             var employees = repository.GetByIds(request.Ids);
-
-            if (employees == null)
-            {
-                return NotFound();
-            }
-            else
-            { 
-                return Ok(employees);
-            }
+            return employees == null ? NotFound() : Ok(employees);
         }
     }
 }

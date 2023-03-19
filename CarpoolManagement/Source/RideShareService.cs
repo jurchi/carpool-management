@@ -32,7 +32,38 @@ namespace CarpoolManagement.Source
             _rideShareRepository.Update(requestedRideShare);
         }
 
+        public IEnumerable<RideShareReport> GenerateReport()
+        {
+            var rideShares = _rideShareRepository.GetAll();
+
+            var reports = rideShares.GroupBy(rideShare => new { rideShare.StartDate.Year, rideShare.StartDate.Month, rideShare.CarPlate })
+                                       .Select(r => new RideShareReport {
+                                           Year = r.Key.Year,
+                                           Month = r.Key.Month,
+                                           Car = new Car { Plate = r.Key.CarPlate },
+                                           Passengers = r.SelectMany(r => r.EmployeeIds)
+                                                         .Distinct()
+                                                         .Select(id => new Employee { Id = id }),
+                                           Trips = r.Count()
+                                       }).ToList();
+
+            var cars = _carRepository.GetAll();
+            var employees = _employeeRepository.GetAll();
+
+            foreach (var report in reports)
+            {
+                report.Car = cars.FirstOrDefault(car => String.Equals(car.Plate, report.Car.Plate, StringComparison.OrdinalIgnoreCase)) ?? report.Car;
+
+                IEnumerable<int> passengerIds = report.Passengers.Select(passenger => passenger.Id).ToList();
+                report.Passengers = employees.Where(employee => passengerIds.Contains(employee.Id)).ToList();
+            }
+
+            return reports;
+        }
+
         public void DeleteRideShare(int id) => _rideShareRepository.DeleteRideShare(id);
+
+        public RideShare? GetById(int id) => _rideShareRepository.GetById(id);
 
         /// <summary>
         /// Handles All Business Validation for Ride Share
@@ -140,6 +171,5 @@ namespace CarpoolManagement.Source
                 throw new BadHttpRequestException($"Requested car:{carPlate}, is booked for time frame of ride share.");
             }
         }
-
     }
 }

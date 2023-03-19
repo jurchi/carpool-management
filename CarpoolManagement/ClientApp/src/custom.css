@@ -1,4 +1,11 @@
 /* Provide sufficient contrast against white background */
+/* base styles */
+* {
+  margin: 0;
+  /* font-family: "Times New Roman",; */
+  color: #333;
+}
+
 a {
   color: #0366d6;
 }
@@ -7,9 +14,44 @@ code {
   color: #E01A76;
 }
 
-.btn-primary {
+.btn {
   color: #fff;
+  margin: 10px;
+  text-align: center;
+}
+
+.btn-primary {
   background-color: #1b6ec2;
   border-color: #1861ac;
-  margin: 10px;
+}
+
+.form {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.form label {
+  text-align: left;
+  display: block;
+  padding: 3px;
+  font-weight: bolder;
+}
+
+.form .note{
+  text-align: left;
+}
+
+.form input, .form textarea, .form select {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 10px 0;
+  border: 1px solid #aca6a6;
+  box-sizing: border-box;
+  display: block;
+}
+
+.right {
+  position: absolute;
+  right: 0px;
 }

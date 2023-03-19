@@ -1,6 +1,7 @@
 ﻿using CarpoolManagement.Models;
 using CarpoolManagement.Source;
 using CarpoolManagement.Source.Models;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
@@ -33,7 +34,8 @@ namespace CarpoolManagement.Controllers
                 StartLocation = newRideShareRequest.StartLocation!,
                 EndLocation = newRideShareRequest.EndLocation!,
                 StartDate = newRideShareRequest.StartDate,
-                EndDate = newRideShareRequest.EndDate
+                EndDate = newRideShareRequest.EndDate,
+                DriverId = newRideShareRequest.DriverId
             };
 
             return _rideShareService.CreateRideShare(newRideShare);
@@ -51,13 +53,30 @@ namespace CarpoolManagement.Controllers
                 StartLocation = updateRideShareRequest.StartLocation!,
                 EndLocation = updateRideShareRequest.EndLocation!,
                 StartDate = updateRideShareRequest.StartDate,
-                EndDate = updateRideShareRequest.EndDate
+                EndDate = updateRideShareRequest.EndDate,
+                DriverId = updateRideShareRequest.DriverId
             };
 
             _rideShareService.UpdateRideShare(newRideShare);
 
             return Ok();
         }
+
+        [HttpGet]
+        [Route("id/{id:int}")]
+        public ActionResult<RideShare> GetById(int id)
+        {
+            var rideShare = _rideShareService.GetById(id);
+            return rideShare == null ? NotFound() : Ok(rideShare);
+        }
+
+        [HttpGet]
+        [Route("report")]
+        public IEnumerable<RideShareReport> GetRideShareReport()
+        {
+            return _rideShareService.GenerateReport();
+        }
+
 
         [HttpDelete]
         [Route("id/{id:int}")]
