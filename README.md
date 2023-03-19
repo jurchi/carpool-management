@@ -8,29 +8,50 @@ Application's requirements were:
 - Display Usage Of Cars with all Passengers By Month
 
 ## Pre-requisites:
-- .NET 6
-- React 18.2.0
+- [.NET SDK](https://dotnet.microsoft.com/en-us/download)
+- [Node.js](https://nodejs.org/en/download/current)
+- React ^18.2.0
+- [rimraf](https://www.npmjs.com/package/rimraf)
 
 ## Startup:
-Appplication can be started multiple ways:
+Considering you meet app's pre-requisites, appplication can be started multiple ways:
 - With Visual Studio
     - Open the project in Visual Studio click on run app will open in new browser window.
-- With *'dotnet run'* command
-    - To run *'dotnet run'* command you'll need to install [.NET SDK](https://dotnet.microsoft.com/en-us/download)
-    - Open terminal in project folder ( .\CarpoolManagement ) and run command *'dotnet run'*
-    - Then navigate to: "https://localhost:7096" to see the app
+- With *'dotnet run'* command  
+To run *'dotnet run'* command you'll need to install [.NET SDK](https://dotnet.microsoft.com/en-us/download)
+    1. Open terminal in project folder ( .\CarpoolManagement ) 
+    2. Run command  
+        *dotnet run*
+    3. Navigate to: "https://localhost:7096" to see the app
         - localhost url can be modified in *profiles* section of project's launchSettings.json file
+- With Docker  
+To run application with Docker you need to install it. More information is [here](https://docs.docker.com/get-docker/)
+    1. Open terminal in project folder ( .\CarpoolManagement )
+    2. Build the docker image with the following command  
+        *docker build -t carpool-management-image .*
+    3. Run Carpool Management app with command  
+        *docker run -p 80:80 carpool-management-image*
+    4. Open browser and navigate to: [http://localhost:80](http://localhost:80) (Check, whether port is set to 80).
 
 ## Description:
-(WIP)
-FE application is divided into three screens.
+
+***You can use [Swagger](https://swagger.io/docs/specification/2-0/what-is-swagger/) for endpoints preview and testing.*** It's accessable on url: *"/swagger"* 
+
+### Project structure:
+- **ClientApp** contains React app based on [Create React App](https://create-react-app.dev/)
+- **Controllers** contians the API edpoints
+- **Models** *in root directory* contains DTOs
+- **Persistance** folder contains database related objects (e.g. repository classes)
+- **Source** stores all domain related logic, models
+
+#### UI Structure:
 
 - Landing page (HOME)  
     - This page provides summary of all ride share records  
     - It gives you ability to create/update/delete ride share records  
 
 - Form page  
-    - This page is accessed by *Create ...* / *Update* buttons  
+    - This page is accessed by *Create...* / *Update* buttons  
     - It ~~is~~ should be dynamically populated when Update is clicked  
     - Start and End location text inputs are required  
     - Driver and Car selection is automatically selected for first available option  
@@ -42,11 +63,9 @@ FE application is divided into three screens.
     - It can be filtered by Year / Month / Car identification plate  
     - Currently filter takes in to account only Start Date of Ride Share  
 
-- ***Application has [Swagger](https://swagger.io/docs/specification/2-0/what-is-swagger/) set up. You can access it on '/swagger' url***
-
 ## Known Issues:
 - Delete button does not react on first click
-- The selected passengers are not populated for "Upadte form"
+- The selected passengers are not populated for "Update form"
 - Form validation Alert is not always populated
 - Overall fetching data is glitchy
 
@@ -60,5 +79,6 @@ FE application is divided into three screens.
 - **Front End (ordered by severity, highest first):**
     - Fix data fetching
     - Add option to pick time for ride share
+    - Add reset button to Ride Share View
     - Organize code into more components
     - Style!

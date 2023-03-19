@@ -82,6 +82,7 @@ namespace CarpoolManagement.Controllers
         /// Updates existing ride share record
         /// </summary>
         /// <param name="updateRideShareRequest">The Update Ride Share Request</param>
+        /// <param name="id">The Ride Share ID</param>
         /// <remarks>
         /// Sample request:
         ///
