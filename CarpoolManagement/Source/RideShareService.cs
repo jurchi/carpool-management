@@ -1,44 +1,128 @@
-﻿using CarpoolManagement.Persistance.Repository;
+﻿using AutoMapper;
+using CarpoolManagement.Persistance;
+using CarpoolManagement.Persistance.Models;
+using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source.Models;
-using System.Reflection.Metadata.Ecma335;
+using Microsoft.EntityFrameworkCore;
 
 namespace CarpoolManagement.Source
 {
     public class RideShareService
     {
-        private readonly RideShareRepository _rideShareRepository;
         private readonly CarRepository _carRepository;
         private readonly EmployeeRepository _employeeRepository;
+        private readonly CarpoolContext _context;
+        private readonly IMapper _mapper;
 
-        public RideShareService(RideShareRepository rideShareRepository, CarRepository carRepository, EmployeeRepository employeeRepository)
+        public RideShareService(CarRepository carRepository, EmployeeRepository employeeRepository, CarpoolContext context, IMapper mapper)
         {
-            _rideShareRepository = rideShareRepository;
+            _context = context;
+            _mapper = mapper;
             _carRepository = carRepository;
             _employeeRepository = employeeRepository;
         }
 
-        public IEnumerable<RideShare> GetAll() => _rideShareRepository.GetAll();
+        public IEnumerable<RideShare> GetAll()
+        {
+            var dbRideShares = _context.RideShare
+                .Include(r => r.Car)
+                .Include(r => r.RideShareEmployee)
+                .ToList();
+
+            return _mapper.Map<IEnumerable<RideShare>>(dbRideShares);
+        }
 
         public RideShare CreateRideShare(RideShare requestedRideShare)
         {
-            RideShareBusinessValidation(requestedRideShare);
+            Car car = GetCar(requestedRideShare.CarPlate);
 
-            return _rideShareRepository.Add(requestedRideShare);
+            ValidateRideShareTimeFrame(requestedRideShare.StartDate, requestedRideShare.EndDate);
+
+            ValidateCarIsAvailable(car.Plate, requestedRideShare.StartDate);
+
+            ValidateIsDriver(requestedRideShare.EmployeeIds);
+
+            int passengerCount = requestedRideShare.EmployeeIds.Count();
+
+            ValidatePassengersCount(passengerCount);
+            ValidateOccupancy(car, passengerCount);
+
+            RideShareEntity dbRideShare = new()
+            {
+                StartDate = requestedRideShare.StartDate,
+                EndDate = requestedRideShare.EndDate,
+                StartLocation = requestedRideShare.StartLocation,
+                EndLocation = requestedRideShare.EndLocation,
+                DriverId = requestedRideShare.DriverId,
+                CarId = car.Id
+            };
+
+            foreach (int id in requestedRideShare.EmployeeIds)
+            {
+                RideShareEmployeeEntity rideShareEmployeeModel = new()
+                {
+                    EmployeeId = id
+                };
+
+                dbRideShare.RideShareEmployee.Add(rideShareEmployeeModel);
+            }
+
+            _context.RideShare.Add(dbRideShare);
+            _context.SaveChanges();
+
+            requestedRideShare.Id = dbRideShare.Id;
+
+            return requestedRideShare;
         }
 
-        public void UpdateRideShare(RideShare requestedRideShare)
+        public void UpdateRideShare(RideShare rideShareUpdateRequest)
         {
-            RideShareBusinessValidation(requestedRideShare);
+            RideShareEntity dbRideShare = _context.RideShare.Where(rideShare => rideShare.Id == rideShareUpdateRequest.Id)
+                                        .Include(r => r.RideShareEmployee)
+                                        .FirstOrDefault()
+                                        ?? throw new KeyNotFoundException($"Ride Share with ID: {rideShareUpdateRequest.Id} could not be found");
 
-            _rideShareRepository.Update(requestedRideShare);
+            Car car = GetCar(rideShareUpdateRequest.CarPlate);
+            dbRideShare.CarId = car.Id;
+
+            ValidateRideShareTimeFrame(rideShareUpdateRequest.StartDate, rideShareUpdateRequest.EndDate);
+
+            ValidateCarIsAvailable(car.Plate, rideShareUpdateRequest.StartDate, rideShareUpdateRequest.Id);
+
+            ValidateIsDriver(rideShareUpdateRequest.EmployeeIds);
+
+            int passengerCount = rideShareUpdateRequest.EmployeeIds.Count();
+            ValidatePassengersCount(passengerCount);
+            ValidateOccupancy(car, passengerCount);
+
+            dbRideShare.RideShareEmployee.Clear();           
+
+            foreach (int id in rideShareUpdateRequest.EmployeeIds)
+            {
+                RideShareEmployeeEntity rideShareEmployeeModel = new()
+                {
+                    EmployeeId = id
+                };
+
+                dbRideShare.RideShareEmployee.Add(rideShareEmployeeModel);
+            }
+
+            dbRideShare.StartDate = rideShareUpdateRequest.StartDate;
+            dbRideShare.EndDate = rideShareUpdateRequest.EndDate;
+            dbRideShare.StartLocation = rideShareUpdateRequest.StartLocation;
+            dbRideShare.EndLocation = rideShareUpdateRequest.EndLocation;
+            dbRideShare.DriverId = rideShareUpdateRequest.DriverId;
+
+            _context.SaveChanges();
         }
-
+        
         public IEnumerable<RideShareReport> GenerateReport()
         {
-            var rideShares = _rideShareRepository.GetAll();
+            var rideShares = GetAll();
 
             var reports = rideShares.GroupBy(rideShare => new { rideShare.StartDate.Year, rideShare.StartDate.Month, rideShare.CarPlate })
-                                       .Select(r => new RideShareReport {
+                                       .Select(r => new RideShareReport
+                                       {
                                            Year = r.Key.Year,
                                            Month = r.Key.Month,
                                            Car = new Car { Plate = r.Key.CarPlate },
@@ -62,55 +146,45 @@ namespace CarpoolManagement.Source
             return reports;
         }
 
-        public void DeleteRideShare(int id) => _rideShareRepository.DeleteRideShare(id);
-
-        public RideShareFullDetails? GetById(int id) {
-            RideShare? rideShare = _rideShareRepository.GetById(id);
-            
-            RideShareFullDetails? rideShareDetails = null;
+        public void DeleteRideShare(int id)
+        {
+            var rideShare = _context.RideShare.Find(id);
 
             if (rideShare != null)
-            { 
-                Car? car = _carRepository.GetByPlate(rideShare!.CarPlate);
-                IEnumerable<Employee> employees = _employeeRepository.GetByIds(rideShare.EmployeeIds);
-
-                rideShareDetails = new()
-                {
-                    Id = rideShare.Id,
-                    StartDate = rideShare.StartDate,
-                    EndDate = rideShare.EndDate,
-                    StartLocation = rideShare.StartLocation,
-                    EndLocation = rideShare.EndLocation,
-                    DriverId = rideShare.DriverId,
-                    Car = car ?? new Car { Plate = rideShare.CarPlate },
-                    Employees = employees
-                };
+            {
+                _context.RideShare.Remove(rideShare);
+                _context.SaveChanges();
             }
+        }
 
-            return rideShareDetails;
-        } 
+        public RideShareFullDetails? GetById(int id)
+        {
+            var dbRideShare = _context.RideShare.Where(rideShare => rideShare.Id == id)
+                .Include(rideShare => rideShare.Car)
+                .Include(r => r.RideShareEmployee)
+                .FirstOrDefault()
+                                                ?? throw new KeyNotFoundException($"Ride Share with ID: {id} could not be found");
+
+            var rideShare = _mapper.Map<RideShareFullDetails>(dbRideShare);
+
+            List<int> employeeIds = rideShare.Employees.Select(employee => employee.Id).ToList();
+            rideShare.Employees = _employeeRepository.GetByIds(employeeIds);
+
+            return rideShare;
+        }
 
         /// <summary>
-        /// Handles All Business Validation for Ride Share
+        /// Retrieves a Car record by plate, if exists
         /// </summary>
-        /// <param name="rideSharePlan"></param>
-        private void RideShareBusinessValidation(RideShare rideSharePlan)
+        /// <param name="carPlate">The Car Plate</param>
+        /// <returns>Found Car</returns>
+        /// <exception cref="KeyNotFoundException">The Car does not exist</exception>
+        private Car GetCar(string carPlate)
         {
-            ValidateRideShareTimeFrame(rideSharePlan.StartDate, rideSharePlan.EndDate);
+            var car = _carRepository.GetByPlate(carPlate)
+                ?? throw new KeyNotFoundException($"Car With Plate: {carPlate} does not exist");
 
-            int passengerCount = rideSharePlan.EmployeeIds.Count();
-
-            ValidatePassengersCount(passengerCount);
-
-            ValidateIsDriver(rideSharePlan.EmployeeIds);
-
-            Car? car = _carRepository.GetByPlate(rideSharePlan.CarPlate);
-
-            ValidateCarExists(car!);
-
-            ValidateOccupancy(car!, passengerCount);
-
-            ValidateCarIsAvailable(rideSharePlan.CarPlate, rideSharePlan.StartDate);
+            return car;
         }
 
         /// <summary>
@@ -154,24 +228,11 @@ namespace CarpoolManagement.Source
         }
 
         /// <summary>
-        /// Validates if Car exists
-        /// </summary>
-        /// <param name="car">The Car</param>
-        /// <exception cref="BadHttpRequestException">Car does not exist in DB</exception>
-        private void ValidateCarExists(Car car)
-        {
-            if (car == null)
-            {
-                throw new BadHttpRequestException("Car Plate does not exist");
-            }
-        }
-
-        /// <summary>
         /// Validates if car has enough space for requested passenger count
         /// </summary>
         /// <param name="car">The Car</param>
         /// <param name="passengerCount">passenger count</param>
-        /// <exception cref="BadHttpRequestException"></exception>
+        /// <exception cref="BadHttpRequestException">There are too many passengers</exception>
         private static void ValidateOccupancy(Car car, int passengerCount)
         {
             if (car.NumberOfSeats < passengerCount)
@@ -183,14 +244,20 @@ namespace CarpoolManagement.Source
         /// <summary>
         /// Validates if car is available for the time frame.
         /// </summary>
-        /// <param name="carPlate"></param>
-        /// <param name="rideStarDate"></param>
-        /// <exception cref="BadHttpRequestException"></exception>
-        private void ValidateCarIsAvailable(string carPlate, DateTime rideStarDate)
+        /// <param name="carPlate">The Car Plate</param>
+        /// <param name="rideStarDate">Start of the Ride</param>
+        /// <param name="excludeRideShareId">The Id of ride Share to be excluded from search</param>
+        /// <exception cref="BadHttpRequestException">The car is unavailable for time frame</exception>
+        private void ValidateCarIsAvailable(string carPlate, DateTime rideStarDate, int? excludeRideShareId = null)
         {
-            var carRideShares = _rideShareRepository.GetRideSharesForCar(carPlate);
+            var rideShares = _context.RideShare.Where(rideShare => rideShare.Car != null && rideShare.Car.Plate == carPlate);
 
-            if (carRideShares?.Any(rs => DateTime.Compare(rs.StartDate, rideStarDate) <= 0
+            if (excludeRideShareId.HasValue)
+            {
+                rideShares = rideShares.Except(rideShares.Where(rideShare => rideShare.Id == excludeRideShareId));
+            }
+
+            if (rideShares?.Any(rs => DateTime.Compare(rs.StartDate, rideStarDate) <= 0
                                       && DateTime.Compare(rideStarDate, rs.EndDate) < 0) == true)
             {
                 throw new BadHttpRequestException($"Requested car:{carPlate}, is booked for time frame of ride share.");

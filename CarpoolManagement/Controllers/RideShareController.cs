@@ -1,4 +1,5 @@
-﻿using CarpoolManagement.Models;
+﻿using AutoMapper;
+using CarpoolManagement.Models;
 using CarpoolManagement.Source;
 using CarpoolManagement.Source.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,12 @@ namespace CarpoolManagement.Controllers
     public class RideShareController : ControllerBase
     {
         private readonly RideShareService _rideShareService;
+        private readonly IMapper _mapper;
 
-        public RideShareController([FromServices] RideShareService rideShareService)
+        public RideShareController([FromServices] RideShareService rideShareService, IMapper mapper)
         {
             _rideShareService = rideShareService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -45,7 +48,8 @@ namespace CarpoolManagement.Controllers
         ///         "startDate": "2009-08-15T13:40:30",
         ///         "endDate": "2009-08-15T13:45:30",
         ///         "carPlate": "AB 123-CD",
-        ///         "employeeIds": [1,2,3]
+        ///         "employeeIds": [1,2,3],
+        ///         "driverId:": 1
         ///     }
         ///
         /// </remarks>
@@ -64,17 +68,7 @@ namespace CarpoolManagement.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public RideShare CreateRideShare(CreateRideShareRequest newRideShareRequest)
         {
-            RideShare newRideShare = new()
-            {
-                CarPlate = newRideShareRequest.CarPlate!,
-                EmployeeIds = newRideShareRequest.EmployeeIds!,
-                StartLocation = newRideShareRequest.StartLocation!,
-                EndLocation = newRideShareRequest.EndLocation!,
-                StartDate = newRideShareRequest.StartDate,
-                EndDate = newRideShareRequest.EndDate,
-                DriverId = newRideShareRequest.DriverId
-            };
-
+            var newRideShare = _mapper.Map<RideShare>(newRideShareRequest);
             return _rideShareService.CreateRideShare(newRideShare);
         }
 
@@ -93,7 +87,8 @@ namespace CarpoolManagement.Controllers
         ///         "startDate": "2009-08-15T13:40:30",
         ///         "endDate": "2009-08-15T13:45:30",
         ///         "carPlate": "AB 123-CD",
-        ///         "employeeIds": [1,2,3]
+        ///         "employeeIds": [1,2,3],
+        ///         "driverId:": 1
         ///     }
         ///
         /// </remarks>
@@ -113,19 +108,8 @@ namespace CarpoolManagement.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Update(int id, UpdateRideShareRequest updateRideShareRequest)
         {
-            RideShare newRideShare = new()
-            {
-                Id = id,
-                CarPlate = updateRideShareRequest.CarPlate!,
-                EmployeeIds = updateRideShareRequest.EmployeeIds!,
-                StartLocation = updateRideShareRequest.StartLocation!,
-                EndLocation = updateRideShareRequest.EndLocation!,
-                StartDate = updateRideShareRequest.StartDate,
-                EndDate = updateRideShareRequest.EndDate,
-                DriverId = updateRideShareRequest.DriverId
-            };
-
-            _rideShareService.UpdateRideShare(newRideShare);
+            var rideShareUpdate = _mapper.Map<RideShare>(updateRideShareRequest);
+            _rideShareService.UpdateRideShare(rideShareUpdate);
 
             return Ok();
         }
@@ -140,11 +124,9 @@ namespace CarpoolManagement.Controllers
         [Route("id/{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetById(int id)
+        public RideShareFullDetails? GetById(int id)
         {
-            var rideShare = _rideShareService.GetById(id);
-
-            return rideShare == null ? NotFound() : Ok(rideShare);
+            return _rideShareService.GetById(id);
         }
 
         /// <summary>
@@ -166,7 +148,7 @@ namespace CarpoolManagement.Controllers
         /// <response code="204">Record deleted</response>
         [HttpDelete]
         [Route("id/{id:int}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]        
         public IActionResult Delete(int id)
         {
             _rideShareService.DeleteRideShare(id);

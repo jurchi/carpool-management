@@ -1,50 +1,95 @@
-﻿using CarpoolManagement.Source.Models;
+﻿using AutoMapper;
+using CarpoolManagement.Persistance.Models;
+using CarpoolManagement.Source.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CarpoolManagement.Persistance.Repository
 {
     public class RideShareRepository
     {
-        private int _id = 0;
-        private Dictionary<int, RideShare> _rideShares = new();
+        private readonly CarpoolContext _context;
+        private readonly IMapper _mapper;
 
-        public IEnumerable<RideShare> GetAll() => _rideShares.Values.ToList();
-
-        public RideShare? GetById(int id)
+        public RideShareRepository(CarpoolContext context, IMapper mapper)
         {
-            _rideShares.TryGetValue(id, out RideShare? rideShare);
-            return rideShare;
+            _context = context;
+            _mapper = mapper;
+        }
+
+        public IEnumerable<RideShare> GetAll()
+        {
+            var dbRideShares = _context.RideShare
+                .Include(r => r.Car)
+                .Include(r => r.RideShareEmployee)
+                .ToList();
+
+            return _mapper.Map<IEnumerable<RideShare>>(dbRideShares);
+        }
+
+        public RideShareFullDetails? GetById(int id)
+        {
+            var dbRideShare = _context.RideShare.Where(rideShare => rideShare.Id == id)
+                                                .Include(rideShare => rideShare.Car)
+                                                .Include(r => r.RideShareEmployee)
+                                                .FirstOrDefault();
+
+            return _mapper.Map<RideShareFullDetails>(dbRideShare);
         }
 
         public RideShare Add(RideShare rideShare)
         {
-            rideShare.Id = _id + 1;
+            RideShareEntity dbRideShare = new()
+            {
+                StartDate = rideShare.StartDate,
+                EndDate = rideShare.EndDate,
+                StartLocation = rideShare.StartLocation,
+                EndLocation = rideShare.EndLocation,
+                DriverId = rideShare.DriverId,
+            };
 
-            _rideShares.Add(rideShare.Id.Value, rideShare);
+            dbRideShare.CarId = 1;
+
+            foreach (int id in rideShare.EmployeeIds)
+            {
+                RideShareEmployeeEntity rideShareEmployeeModel = new()
+                {
+                    EmployeeId = id
+                };
+
+                dbRideShare.RideShareEmployee.Add(rideShareEmployeeModel);
+            }
+
+            _context.RideShare.Add(dbRideShare);            
+            _context.SaveChanges();
+
+            rideShare.Id = dbRideShare.Id;
 
             return rideShare;
         }
 
         public void Update(RideShare rideShare)
         {
-            int id = rideShare.Id!.Value;
+            RideShareEntity? dbRideShare = _context.RideShare.Find(rideShare.Id);
 
-            if (_rideShares.ContainsKey(id))
-            {
-                _rideShares[id] = rideShare;
-            }
+            var currentEmployees = _context.RideShareEmployee.Where(rse => rse.RideShareId == rideShare.Id);
+            _context.RideShareEmployee.RemoveRange(currentEmployees);
         }
 
         public void DeleteRideShare(int id)
         {
-            if (_rideShares.ContainsKey(id))
+            var rideShare = _context.RideShare.Find(id);
+
+            if (rideShare != null)
             {
-                _rideShares.Remove(id);
+                _context.RideShare.Remove(rideShare);
+                _context.SaveChanges();
             }
         }
 
         public IEnumerable<RideShare> GetRideSharesForCar(string plate)
         {
-            return _rideShares.Values.Where(rideShare => rideShare.CarPlate == plate).ToList();
+            var rideShares = _context.RideShare.Where(rideShare => rideShare.Car != null && rideShare.Car.Plate == plate).ToList();
+            return _mapper.Map<IEnumerable<RideShare>>(rideShares);
         }
     }
 }

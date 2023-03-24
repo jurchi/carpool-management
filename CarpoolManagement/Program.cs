@@ -1,7 +1,9 @@
+using CarpoolManagement.Persistance;
 using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 
@@ -9,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
 builder.Services.AddProblemDetails(options => {
     options.Map<BadHttpRequestException>(ex => new ProblemDetails
     {
@@ -17,13 +20,25 @@ builder.Services.AddProblemDetails(options => {
         Detail = ex.Message
     });
 
+    options.Map<KeyNotFoundException>(ex => new ProblemDetails
+    {
+        Title = "Not Found",
+        Status = StatusCodes.Status404NotFound,
+        Detail = ex.Message
+    });
+
     options.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
 });
+
+string connectionString = builder.Configuration.GetConnectionString("CarpoolDbConnection")!;
+builder.Services.AddDbContext<CarpoolContext>(options => options.UseSqlite(connectionString));
+
+builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 
 builder.Services.AddScoped<RideShareService>();
 builder.Services.AddScoped<CarRepository>();
 builder.Services.AddScoped<EmployeeRepository>();
-builder.Services.AddSingleton<RideShareRepository>();
+builder.Services.AddScoped<RideShareRepository>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
