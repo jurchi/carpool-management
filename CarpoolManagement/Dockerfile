@@ -11,9 +11,15 @@ WORKDIR /CarpoolManagement
 COPY . ./
  
 RUN dotnet restore
+
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN dotnet ef database update
+
 RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 EXPOSE 80
+COPY --from=build-env /CarpoolManagement/CarpoolManagement.db .
 COPY --from=build-env /CarpoolManagement/out .
 ENTRYPOINT ["dotnet", "CarpoolManagement.dll"]
