@@ -13,6 +13,8 @@ const RideShareForm = () => {
     const params = new URLSearchParams(search);
     const id = params.get('id');
 
+    const [error, setError] = useState({ visible: false, message: "" });
+
     const [startLocation, setStartLocation] = useState('');
     const [endLocation, setEndLocation] = useState('');
 
@@ -79,11 +81,10 @@ const RideShareForm = () => {
                     setSelectedDriver(data.driverId);
 
                     let filteredEmployees = data.employees.filter(employee => employee.id != data.driverId);
-                    setSelectedPassengers(filteredEmployees);
+                    setSelectedPassengers(filteredEmployees.map(employee => employee.id));
                     setDates([{ startDate: new Date(data.startDate), endDate: new Date(data.endDate), key: 'selection' }]);
 
                     let passOpts = filteredEmployees.map(employee => ({ value: employee.id, label: employee.name }));
-                    console.log(passOpts);
                     setPassengerOptions(passOpts);
                 })
                 .catch(err => {
@@ -95,8 +96,9 @@ const RideShareForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setError({visible: false, message: ""});
 
-        let url = '/api/rideshare'
+        let url = '/api/rideshare';
         let httpMethod = 'POST';
 
         if (id) {
@@ -104,9 +106,8 @@ const RideShareForm = () => {
             url += `/id/${id}`;
         }
 
-        let allPassengers = selectedPassengers.map(Number);
+        let allPassengers = selectedPassengers.map(Number);       
         allPassengers.push(selectedDriver);
-
 
         const request = {
             startLocation: startLocation,
@@ -124,17 +125,20 @@ const RideShareForm = () => {
             method: httpMethod,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(request)
-            })
+        })
             .then(response => {
-                if (!response.ok) throw response;
+                if (!response.ok) {
+                    return response.json().then(response => { throw new Error(`${response.title}` + " Message: " + `${response.detail}`) })
+                }
 
                 return response.json();
             })
-            .then(() =>{
+            .then(() => {
                 navigate('/');
             })
             .catch(error => {
-                return error.json().then(body => alert(`${body.title} ${body.detail}`))
+                console.log(error);
+                setError({ visible: true, message: error.message });
             });
     }
 
@@ -181,6 +185,10 @@ const RideShareForm = () => {
 
     return (
         <div className="container form">
+            <div className={"alert" + ` ${!error.visible && "hide"}`}>
+                <span className="closeBtn" onClick={() => setError({visible: false, message: ""})}>&times;</span>
+                {error.message}
+            </div>
             <form onSubmit={handleSubmit}>
                 <label>Start Location:</label>
                 <input

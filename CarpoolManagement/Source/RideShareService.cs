@@ -75,7 +75,7 @@ namespace CarpoolManagement.Source
             return requestedRideShare;
         }
 
-        public void UpdateRideShare(RideShare rideShareUpdateRequest)
+        public RideShare UpdateRideShare(RideShare rideShareUpdateRequest)
         {
             RideShareEntity dbRideShare = _context.RideShare.Where(rideShare => rideShare.Id == rideShareUpdateRequest.Id)
                                         .Include(r => r.RideShareEmployee)
@@ -114,8 +114,10 @@ namespace CarpoolManagement.Source
             dbRideShare.DriverId = rideShareUpdateRequest.DriverId;
 
             _context.SaveChanges();
+
+            return rideShareUpdateRequest;
         }
-        
+
         public IEnumerable<RideShareReport> GenerateReport()
         {
             var rideShares = GetAll();
@@ -260,7 +262,7 @@ namespace CarpoolManagement.Source
             if (rideShares?.Any(rs => DateTime.Compare(rs.StartDate, rideStarDate) <= 0
                                       && DateTime.Compare(rideStarDate, rs.EndDate) < 0) == true)
             {
-                throw new BadHttpRequestException($"Requested car:{carPlate}, is booked for time frame of ride share.");
+                throw new BadHttpRequestException($"Requested car: {carPlate}, is booked for time frame of ride share.");
             }
         }
     }

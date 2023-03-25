@@ -92,7 +92,7 @@ namespace CarpoolManagement.Controllers
         ///     }
         ///
         /// </remarks>
-        /// <response code="200">Update was successful</response>
+        /// <response code="200">Returns Updated Ride Share</response>
         /// <response code="400">
         ///     <para>Request breaks one of the validation rules:</para>
         ///     <para>Start Date must be earlier than End Date</para>
@@ -106,12 +106,11 @@ namespace CarpoolManagement.Controllers
         [Route("id/{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Update(int id, UpdateRideShareRequest updateRideShareRequest)
+        public RideShare Update(int id, UpdateRideShareRequest updateRideShareRequest)
         {
             var rideShareUpdate = _mapper.Map<RideShare>(updateRideShareRequest);
-            _rideShareService.UpdateRideShare(rideShareUpdate);
-
-            return Ok();
+            rideShareUpdate.Id = id;
+            return _rideShareService.UpdateRideShare(rideShareUpdate);
         }
 
         /// <summary>
