@@ -1,15 +1,16 @@
 ﻿using AutoMapper;
+using CarpoolManagement.Persistance;
 using CarpoolManagement.Source.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CarpoolManagement.Persistance.Repository
+namespace CarpoolManagement.Source
 {
-    public class EmployeeRepository
+    public class EmployeeService
     {
         private readonly CarpoolContext _context;
         private readonly IMapper _mapper;
 
-        public EmployeeRepository(IMapper mapper, CarpoolContext context)
+        public EmployeeService(IMapper mapper, CarpoolContext context)
         {
             _mapper = mapper;
             _context = context;
@@ -22,8 +23,8 @@ namespace CarpoolManagement.Persistance.Repository
         }
 
         public IEnumerable<Employee> GetByIds(IEnumerable<int> ids)
-        { 
-            var dbEmployees = _context.Employee.AsNoTracking().Where(employee =>  ids.Contains(employee.Id));
+        {
+            var dbEmployees = _context.Employee.AsNoTracking().Where(employee => ids.Contains(employee.Id));
             return _mapper.Map<IEnumerable<Employee>>(dbEmployees);
         }
     }

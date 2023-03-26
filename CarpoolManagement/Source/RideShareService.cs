@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CarpoolManagement.Persistance;
 using CarpoolManagement.Persistance.Models;
-using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,12 +8,12 @@ namespace CarpoolManagement.Source
 {
     public class RideShareService
     {
-        private readonly CarRepository _carRepository;
-        private readonly EmployeeRepository _employeeRepository;
+        private readonly CarService _carRepository;
+        private readonly EmployeeService _employeeRepository;
         private readonly CarpoolContext _context;
         private readonly IMapper _mapper;
 
-        public RideShareService(CarRepository carRepository, EmployeeRepository employeeRepository, CarpoolContext context, IMapper mapper)
+        public RideShareService(CarService carRepository, EmployeeService employeeRepository, CarpoolContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -95,7 +94,7 @@ namespace CarpoolManagement.Source
             ValidatePassengersCount(passengerCount);
             ValidateOccupancy(car, passengerCount);
 
-            dbRideShare.RideShareEmployee.Clear();           
+            dbRideShare.RideShareEmployee.Clear();
 
             foreach (int id in rideShareUpdateRequest.EmployeeIds)
             {

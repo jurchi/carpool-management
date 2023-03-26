@@ -1,15 +1,16 @@
 ﻿using AutoMapper;
+using CarpoolManagement.Persistance;
 using CarpoolManagement.Source.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CarpoolManagement.Persistance.Repository
+namespace CarpoolManagement.Source
 {
-    public class CarRepository
+    public class CarService
     {
         private readonly CarpoolContext _context;
         private readonly IMapper _mapper;
 
-        public CarRepository(CarpoolContext context, IMapper mapper)
+        public CarService(CarpoolContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;

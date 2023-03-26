@@ -1,5 +1,5 @@
 ﻿using CarpoolManagement.Models;
-using CarpoolManagement.Persistance.Repository;
+using CarpoolManagement.Source;
 using CarpoolManagement.Source.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,21 +13,21 @@ namespace CarpoolManagement.Controllers
         /// <summary>
         /// Retrieves all Car records from repository
         /// </summary>
-        /// <param name="repository">The Cars repository</param>
+        /// <param name="carService">Service for CAR domain</param>
         /// <returns>All cars</returns>
         /// <response code="200">Returns All Found Car</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IEnumerable<Car> Get([FromServices] CarRepository repository)
+        public IEnumerable<Car> Get([FromServices] CarService carService)
         {
-            return repository.GetAll();
+            return carService.GetAll();
         }
 
         /// <summary>
         /// Finds car by available search criteria.
         /// </summary>
         /// <param name="request">Search request</param>
-        /// <param name="repository">The Cars repository</param>
+        /// <param name="carService">Service for CAR domain</param>
         /// <returns>A Car with plate</returns>
         /// <remarks>
         /// Sample request:
@@ -43,9 +43,9 @@ namespace CarpoolManagement.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetCarByPlate([FromBody]FindCarRequest request, [FromServices] CarRepository repository)
+        public IActionResult GetCarByPlate([FromBody] FindCarRequest request, [FromServices] CarService carService)
         {
-            var car = repository.GetByPlate(request.Plate);
+            var car = carService.GetByPlate(request.Plate);
             return car == null ? NotFound() : Ok(car);
         }
     }

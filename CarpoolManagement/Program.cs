@@ -1,5 +1,4 @@
 using CarpoolManagement.Persistance;
-using CarpoolManagement.Persistance.Repository;
 using CarpoolManagement.Source;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-builder.Services.AddProblemDetails(options => {
+builder.Services.AddProblemDetails(options =>
+{
     options.Map<BadHttpRequestException>(ex => new ProblemDetails
     {
         Title = "Bad Request",
@@ -36,9 +36,8 @@ builder.Services.AddDbContext<CarpoolContext>(options => options.UseSqlite(conne
 builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 
 builder.Services.AddScoped<RideShareService>();
-builder.Services.AddScoped<CarRepository>();
-builder.Services.AddScoped<EmployeeRepository>();
-builder.Services.AddScoped<RideShareRepository>();
+builder.Services.AddScoped<CarService>();
+builder.Services.AddScoped<EmployeeService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
